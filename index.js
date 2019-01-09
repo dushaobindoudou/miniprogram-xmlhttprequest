@@ -54,7 +54,7 @@ const STATUS_TEXT_MAP = {
     505: 'HTTP Version Not Supported',
 };
 
-const urlParse = require('url-parse');
+const urlParse = require('./url-parse.js');
 
 class XMLHttpRequest {
     constructor() {
@@ -67,7 +67,6 @@ class XMLHttpRequest {
         this._readyState = XMLHttpRequest.UNINITIALIZED;
         this._onreadystatechange = null;
         this._header = {
-            'User-Agent': 'miniprogram-xmlhttprequest',
             Accept: '*/*',
         };
         this._responseType = '';
@@ -114,9 +113,13 @@ class XMLHttpRequest {
             complete: this._requestComplete,
         });
 
-        this._requestTask.onHeadersReceived(() => {
-            this._callReadyStateChange(XMLHttpRequest.RECEIVING);
-        });
+        this._callReadyStateChange(XMLHttpRequest.SEND);
+
+        if (this._requestTask && typeof this._requestTask.onHeadersReceived === 'function') {
+            this._requestTask.onHeadersReceived(() => {
+                this._callReadyStateChange(XMLHttpRequest.RECEIVING);
+            });
+        }
     }
 
     _requestSuccess({ data, statusCode, header }) {
@@ -208,9 +211,9 @@ class XMLHttpRequest {
         }
         this._readyState = XMLHttpRequest.UNINITIALIZED;
         this._status = 0;
-        this._statusText = '';
-        this._response = '';
-        this._responseXML = '';
+        this._statusText = null;
+        this._response = null;
+        this._responseXML = null;
     }
 
     getAllResponseHeaders() {
